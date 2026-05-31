@@ -1,0 +1,11 @@
+services:
+  toonflow:
+    image: ghcr.io/yueyefengs/toonflow-app:latest
+    # platform: linux/amd64
+    container_name: toonflow
+    restart: unless-stopped
+    ports:
+      - "3101:10588"
+      - "10588:10588"
+    volumes:
+      - ./data:/app/data
