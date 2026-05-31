@@ -237,9 +237,9 @@ https://github.com/user-attachments/assets/2d9fddac-dfdf-4640-b030-b09d7f7287e9
 
 | 操作系统 | GitHub                                                       | 说明           |
 | :------: | :----------------------------------------------------------- | :------------- |
-| Windows  | [Release](https://github.com/HBAI-Ltd/Toonflow-app/releases) | 官方发布安装包 |
-|  Linux   | [Release](https://github.com/HBAI-Ltd/Toonflow-app/releases) | 官方发布安装包 |
-|  macOS   | [Release](https://github.com/HBAI-Ltd/Toonflow-app/releases) | 官方发布安装包 |
+| Windows  | [Release](https://github.com/yueyefengs/Toonflow-app/releases) | 官方发布安装包 |
+|  Linux   | [Release](https://github.com/yueyefengs/Toonflow-app/releases) | 官方发布安装包 |
+|  macOS   | [Release](https://github.com/yueyefengs/Toonflow-app/releases) | 官方发布安装包 |
 
 > [!CAUTION]
 > MacOS 系统请到 设置-隐私与安全性 配置安全性否则可能因证书问题无法正常打开
@@ -262,29 +262,48 @@ https://github.com/user-attachments/assets/2d9fddac-dfdf-4640-b030-b09d7f7287e9
 
 - 已安装 [Docker](https://docs.docker.com/get-docker/)（版本 20.10+）
 
-### 方式一：在线部署
+### 方式一：生产环境部署（推荐）
 
-待完善，暂时使用本地构建。
+直接拉取已构建好的镜像，无需本地编译：
+
+```bash
+# 登录 GitHub Container Registry
+docker login ghcr.io -u <你的GitHub用户名> --password-stdin <<< "<你的GitHub PAT>"
+
+# 拉取镜像
+docker pull ghcr.io/yueyefengs/toonflow-app:latest
+
+# 启动容器
+docker run -d \
+  --name toonflow \
+  -p 10588:10588 \
+  -v /opt/toonflow/data:/app/data \
+  ghcr.io/yueyefengs/toonflow-app:latest
+```
+
+镜像由 GitHub Actions 在 push 到 `prod` 分支时自动构建并推送，无需手动操作。
 
 ### 方式二：本地构建
 
-使用本地已有的源码直接构建，适合开发者或已克隆仓库的用户，这需要你在本地安装 git：
+适合需要自定义镜像或开发调试的场景：
 
-```shell
-# 先克隆项目（如已有则跳过）
-git clone https://github.com/HBAI-Ltd/Toonflow-app.git
+```bash
+# 克隆项目
+git clone https://github.com/yueyefengs/Toonflow-app.git
 cd Toonflow-app
 
-# 使用 docker-compose 本地构建并启动
-yarn docker:local
-
-# 或者手动构建
+# 构建镜像
 docker build -t toonflow .
-docker run -d -p <本地端口>:10588 -v <本地数据路径>:/app/data toonflow
 
-# 此时在相应端口的 /web/index.html 路径即可访问页面
-# 例如 http://localhost:10588/web/index.html
+# 启动容器
+docker run -d \
+  --name toonflow \
+  -p 10588:10588 \
+  -v $(pwd)/data:/app/data \
+  toonflow
 ```
+
+访问 `http://localhost:10588/web/index.html` 即可使用。
 
 ### 服务端口说明
 
@@ -307,10 +326,40 @@ docker run -d -p <本地端口>:10588 -v <本地数据路径>:/app/data toonflow
 ### 一、服务器环境要求
 
 - **系统**：Ubuntu 20.04+ / CentOS 7+
-- **Node.js**：24.x（推荐，最低 23.11.1+）
+- **Docker**：20.10+（推荐方式）
+- **Node.js**：24.x（仅源码部署时需要）
 - **内存**：2GB+
 
-### 二、服务器部署
+### 二、Docker 部署（推荐）
+
+```bash
+# 登录 GitHub Container Registry
+docker login ghcr.io -u <你的GitHub用户名> --password-stdin <<< "<你的GitHub PAT>"
+
+# 拉取镜像并启动
+docker pull ghcr.io/yueyefengs/toonflow-app:latest
+docker run -d \
+  --name toonflow \
+  --restart unless-stopped \
+  -p 10588:10588 \
+  -v /opt/toonflow/data:/app/data \
+  ghcr.io/yueyefengs/toonflow-app:latest
+```
+
+镜像更新后重新部署：
+
+```bash
+docker pull ghcr.io/yueyefengs/toonflow-app:latest
+docker stop toonflow && docker rm toonflow
+docker run -d \
+  --name toonflow \
+  --restart unless-stopped \
+  -p 10588:10588 \
+  -v /opt/toonflow/data:/app/data \
+  ghcr.io/yueyefengs/toonflow-app:latest
+```
+
+### 三、源码部署
 
 #### 1. 安装环境
 
@@ -329,7 +378,7 @@ npm install -g yarn pm2
 
 ```bash
 cd /opt
-git clone https://github.com/HBAI-Ltd/Toonflow-app.git
+git clone https://github.com/yueyefengs/Toonflow-app.git
 cd Toonflow-app
 yarn install
 yarn build
@@ -339,7 +388,7 @@ yarn build
 
 ```bash
 cd /opt
-git clone https://gitee.com/HBAI-Ltd/Toonflow-app.git
+git clone https://gitee.com/yueyefengs/Toonflow-app.git
 cd Toonflow-app
 yarn install
 yarn build
@@ -441,14 +490,14 @@ pm2 monit             # 监控面板
    **从 GitHub 克隆：**
 
    ```bash
-   git clone https://github.com/HBAI-Ltd/Toonflow-app.git
+   git clone https://github.com/yueyefengs/Toonflow-app.git
    cd Toonflow-app
    ```
 
    **从 Gitee 克隆（国内推荐）：**
 
    ```bash
-   git clone https://gitee.com/HBAI-Ltd/Toonflow-app.git
+   git clone https://gitee.com/yueyefengs/Toonflow-app.git
    cd Toonflow-app
    ```
 
