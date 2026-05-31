@@ -56,3 +56,5 @@ data/oss/*
 data/test.sqlite
 version.txt
 ./xiaoshu
+xiaoshuo/
+小说章节/
