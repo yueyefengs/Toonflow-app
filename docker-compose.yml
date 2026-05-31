@@ -5,7 +5,6 @@ services:
     container_name: toonflow
     restart: unless-stopped
     ports:
-      - "3201:10588"
       - "10588:10588"
     volumes:
       - ./flowdata:/app/data
