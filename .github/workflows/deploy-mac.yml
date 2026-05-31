@@ -1,9 +1,6 @@
-name: 部署生产环境
+name: 部署 Mac (ARM64)
 
 on:
-  push:
-    branches:
-      - prod
   workflow_dispatch:
 
 env:
@@ -13,7 +10,7 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    name: 构建并推送 Docker 镜像
+    name: 构建并推送 Docker 镜像 (ARM64)
     permissions:
       contents: read
       packages: write
@@ -29,6 +26,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: 设置 QEMU（ARM64 交叉编译）
+        uses: docker/setup-qemu-action@v3
+
       - name: 设置 Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -38,8 +38,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=latest
-            type=sha
+            type=raw,value=latest-arm64
+            type=sha,suffix=-arm64
 
       - name: 构建并推送
         uses: docker/build-push-action@v6
@@ -48,6 +48,6 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/amd64
+          platforms: linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
