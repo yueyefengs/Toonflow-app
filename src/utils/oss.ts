@@ -52,9 +52,13 @@ class OSS {
     const safePath = normalizeUserPath(userRelPath);
     // URL 始终使用 /，所以这里需要将系统分隔符转回 /
     let url = `/${prefix}/`;
-    if (process.env.ossURL && process.env.ossURL !== "") url = process.env.ossURL + `/${prefix}/`;
-    if (process.env.NODE_ENV == "dev") url = `http://localhost:10588/${prefix}/`;
-    if (isEletron()) url = `http://localhost:${process.env.PORT}/${prefix}/`;
+    if (process.env.ossURL && process.env.ossURL !== "") {
+      url = process.env.ossURL + `/${prefix}/`;
+    } else if (process.env.NODE_ENV == "dev") {
+      url = `http://localhost:10588/${prefix}/`;
+    } else if (isEletron()) {
+      url = `http://localhost:${process.env.PORT}/${prefix}/`;
+    }
     return `${url}${safePath.split(path.sep).join("/")}`;
   }
 

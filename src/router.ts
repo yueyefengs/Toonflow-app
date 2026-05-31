@@ -157,6 +157,7 @@ import route153 from "./routes/setting/vendorConfig/enableVendor";
 import route154 from "./routes/setting/vendorConfig/getCodeByLink";
 import route155 from "./routes/setting/vendorConfig/getVendorList";
 import route156 from "./routes/setting/vendorConfig/modelTest";
+import qiniuConfig from "./routes/setting/qiniuConfig";
 import route157 from "./routes/setting/vendorConfig/modelTest/imageTest";
 import route158 from "./routes/setting/vendorConfig/modelTest/textTest";
 import route159 from "./routes/setting/vendorConfig/modelTest/videoTest";
@@ -337,4 +338,5 @@ export default async (app: Express) => {
   app.use("/api/task/getTaskCategories", route165);
   app.use("/api/task/taskDetails", route166);
   app.use("/api/test/test", route167);
+  app.use("/api/setting/qiniuConfig", qiniuConfig);
 }

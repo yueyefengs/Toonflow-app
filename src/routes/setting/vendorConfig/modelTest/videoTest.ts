@@ -59,7 +59,7 @@ export default router.post(
         prompt: prompt,
         referenceList: [...images, ...videos, ...audios],
         audio: typeof selectedModel.audio == "boolean" ? selectedModel.audio : true,
-        mode: modeData.length > 0 ? modeData : mode,
+        mode: modeData.length > 0 ? modeData : [mode],
       });
       await reqFn.save("test.mp4");
       const resultUrl = await u.oss.getFileUrl("test.mp4");

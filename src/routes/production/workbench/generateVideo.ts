@@ -71,7 +71,8 @@ export default router.post(
     const base64 = await Promise.all(
       images.map(async (item) => {
         if (!item) return null;
-        return { base64: await u.oss.getImageBase64(item.path), type: item.sources == "audio" ? "audio" : "image" };
+        const type = item.sources == "audio" ? "audio" : "image";
+        return { base64: await u.oss.getImageBase64(item.path), url: await u.oss.getFileUrl(item.path), type };
       }),
     );
     //新增
@@ -96,7 +97,7 @@ export default router.post(
         {
           prompt,
           referenceList: base64.filter(Boolean) as ReferenceList[],
-          mode: modeData.length > 0 ? modeData : mode,
+          mode: modeData.length > 0 ? modeData : [mode],
           duration,
           aspectRatio: (ratio?.videoRatio as "16:9" | "9:16") || "16:9",
           resolution,

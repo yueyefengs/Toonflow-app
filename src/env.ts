@@ -1,3 +1,9 @@
+import { config } from "dotenv";
+import path from "path";
+
+// 加载项目根目录的 .env 文件（如存在）
+config({ path: path.resolve(process.cwd(), ".env") });
+
 // 判断是否为打包后的 Electron 环境
 const isElectron = typeof process.versions?.electron !== "undefined";
 let isPackaged = false;

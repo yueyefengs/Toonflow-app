@@ -1,6 +1,7 @@
 import { VM } from "vm2";
 import sharp from "sharp";
 import axios from "axios";
+import crypto from "crypto";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createDeepSeek } from "@ai-sdk/deepseek";
 import { createZhipu } from "zhipu-ai-provider";
@@ -30,6 +31,7 @@ export default function runCode(code: string, vendor?: Record<string, any>) {
     zipImage,
     zipImageResolution,
     urlToBase64,
+    base64ToUrl,
     mergeImages,
     pollTask,
     fetch: fetch,
@@ -83,6 +85,56 @@ export async function urlToBase64(url: string): Promise<string> {
   const mime = res.headers["content-type"] || "image/jpeg";
   const b64 = Buffer.from(res.data).toString("base64");
   return `data:${mime};base64,${b64}`;
+}
+
+// base64 data URI → 优先上传七牛云，fallback 本地 OSS URL
+export async function base64ToUrl(completeBase64: string): Promise<string> {
+  const match = completeBase64.match(/^data:([^;]+);base64,(.+)$/s);
+  if (!match) throw new Error("base64ToUrl: 无效的 base64 格式");
+  const mimeType = match[1];
+  const ext = mimeType.split("/")[1]?.split("+")[0] || "jpg";
+  const buffer = Buffer.from(match[2], "base64");
+
+  // 读取七牛云配置（优先环境变量，其次数据库）
+  const getQiniuConfig = async () => {
+    const ak = process.env.QINIU_ACCESS_KEY;
+    const sk = process.env.QINIU_SECRET_KEY;
+    const bucket = process.env.QINIU_BUCKET;
+    const domain = process.env.QINIU_DOMAIN;
+    if (ak && sk && bucket && domain) return { ak, sk, bucket, domain };
+    try {
+      const rows = await u.db("o_setting").whereIn("key", ["qiniuAK", "qiniuSK", "qiniuBucket", "qiniuDomain"]).select("key", "value");
+      const cfg: Record<string, string> = {};
+      rows.forEach((r: any) => (cfg[r.key] = r.value));
+      if (cfg.qiniuAK && cfg.qiniuSK && cfg.qiniuBucket && cfg.qiniuDomain)
+        return { ak: cfg.qiniuAK, sk: cfg.qiniuSK, bucket: cfg.qiniuBucket, domain: cfg.qiniuDomain };
+    } catch {}
+    return null;
+  };
+
+  const qiniu = await getQiniuConfig();
+  if (qiniu) {
+    const key = `toonflow/temp/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+    const putPolicy = Buffer.from(JSON.stringify({ scope: `${qiniu.bucket}:${key}`, deadline: Math.floor(Date.now() / 1000) + 3600 })).toString("base64url");
+    const sign = crypto.createHmac("sha1", qiniu.sk).update(putPolicy).digest("base64url");
+    const token = `${qiniu.ak}:${sign}:${putPolicy}`;
+
+    const form = new FormData();
+    form.append("token", token);
+    form.append("key", key);
+    form.append("file", buffer, { filename: `image.${ext}`, contentType: mimeType });
+
+    const uploadUrl = process.env.QINIU_UPLOAD_URL || "https://up.qiniup.com";
+    await axios.post(uploadUrl, form, { headers: form.getHeaders() });
+
+    const domain = qiniu.domain.replace(/\/$/, "");
+    return `${domain}/${key}`;
+  }
+
+  // fallback：本地 OSS
+  const filename = `temp/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+  await u.oss.writeFile(filename, completeBase64);
+  return await u.oss.getFileUrl(filename);
 }
 
 export async function pollTask(
