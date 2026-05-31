@@ -54,5 +54,6 @@ database.d.ts
 .devtools
 data/oss/*
 data/test.sqlite
+flowdata/
 version.txt
 xiaoshuo/

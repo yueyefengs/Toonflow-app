@@ -14,9 +14,15 @@ RUN node -e "const fs=require('fs');const pkg=JSON.parse(fs.readFileSync('packag
     yarn install --frozen-lockfile && \
     yarn cache clean
 
+# 备份应用内置文件，供 entrypoint 在挂载卷时恢复
+RUN cp -r /app/data/web /app/data-bak/web 2>/dev/null; \
+    cp -r /app/data/skills /app/data-bak/skills 2>/dev/null; \
+    chmod +x /app/docker-entrypoint.sh
+
 ENV NODE_ENV=dev
 ENV PORT=10588
 
 EXPOSE 10588
 
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["yarn", "dev"]
